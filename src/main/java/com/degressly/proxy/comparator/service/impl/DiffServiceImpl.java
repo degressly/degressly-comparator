@@ -37,7 +37,8 @@ public class DiffServiceImpl implements DiffService {
 				.readValue(objectMapper.writeValueAsString(responsesDto.getCandidateResult()), new TypeReference<>() {
 				});
 
-			List<String> responseDiffs = DiffEngine.getNonDeterministicDifferences(primaryMap, secondaryMap, candidateMap);
+			List<String> responseDiffs = DiffEngine.getNonDeterministicDifferences(primaryMap, secondaryMap,
+					candidateMap);
 
 			persistenceServices.forEach((persistenceService -> persistenceService.save(responsesDto.getTraceId(),
 					responseDiffs, Collections.emptyList())));

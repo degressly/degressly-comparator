@@ -40,7 +40,7 @@ public class DiffEngine {
 		Iterator<String> fieldNames = primary.fieldNames();
 		while (fieldNames.hasNext()) {
 			String fieldName = fieldNames.next();
-			if("body".equals(fieldName)) {
+			if ("body".equals(fieldName)) {
 				System.out.println("here");
 			}
 			JsonNode primaryValue = primary.get(fieldName);
@@ -56,9 +56,11 @@ public class DiffEngine {
 			}
 			else if (primaryValue.isObject()) {
 				findDifferences(primaryValue, candidateValue, secondaryValue, path + "/" + fieldName, differences);
-			} else if (primaryValue.isArray()) {
+			}
+			else if (primaryValue.isArray()) {
 				for (int i = 0; i < primaryValue.size(); i++) {
-					findDifferences(primaryValue.get(i), candidateValue.get(i), secondaryValue.get(i), path+"/"+i, differences);
+					findDifferences(primaryValue.get(i), candidateValue.get(i), secondaryValue.get(i), path + "/" + i,
+							differences);
 				}
 
 			}

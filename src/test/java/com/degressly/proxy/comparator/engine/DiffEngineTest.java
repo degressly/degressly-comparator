@@ -29,10 +29,12 @@ public class DiffEngineTest {
 
 		List<String> differences = findDeterministicDifferences(primaryJson, candidateJson, secondaryJson);
 		Assert.assertEquals(4, differences.size());
-//		Assert.assertArrayEquals(
-//				new String[] { "/age: 30 -> 31", "/0/a: true -> false", "/test: [{\"a\":true},2,3] -> [{\"a\":false},2,3]",
-//						"/address: {\"city\":\"New York\",\"zip\":10001} -> {\"city\":\"Los Angeles\",\"zip\":90001}" },
-//				differences.toArray());
+		// Assert.assertArrayEquals(
+		// new String[] { "/age: 30 -> 31", "/0/a: true -> false", "/test:
+		// [{\"a\":true},2,3] -> [{\"a\":false},2,3]",
+		// "/address: {\"city\":\"New York\",\"zip\":10001} -> {\"city\":\"Los
+		// Angeles\",\"zip\":90001}" },
+		// differences.toArray());
 		differences.forEach(System.out::println);
 	}
 

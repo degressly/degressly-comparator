@@ -10,10 +10,11 @@ import java.util.List;
 @Service
 public class LogPersistenceServiceImpl implements PersistenceService {
 
-    Logger logger = LoggerFactory.getLogger(LogPersistenceServiceImpl.class);
+	Logger logger = LoggerFactory.getLogger(LogPersistenceServiceImpl.class);
 
-    @Override
-    public void save(String traceId, List<String> responseDiffs, List<String> downstreamDiffs) {
-        logger.info("traceId {} \n responseDiff: {} \n downstreamDiff: {} ", traceId, responseDiffs, downstreamDiffs);
-    }
+	@Override
+	public void save(String traceId, List<String> responseDiffs, List<String> downstreamDiffs) {
+		logger.info("traceId {} \n responseDiff: {} \n downstreamDiff: {} ", traceId, responseDiffs, downstreamDiffs);
+	}
+
 }
