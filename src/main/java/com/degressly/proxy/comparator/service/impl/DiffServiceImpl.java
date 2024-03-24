@@ -41,7 +41,7 @@ public class DiffServiceImpl implements DiffService {
 					candidateMap);
 
 			persistenceServices.forEach((persistenceService -> persistenceService.save(responsesDto.getTraceId(),
-					responseDiffs, Collections.emptyList())));
+					responsesDto.getRequestUrl(), responsesDto, responseDiffs, Collections.emptyList())));
 
 		}
 		catch (JsonProcessingException e) {

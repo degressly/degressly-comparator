@@ -30,11 +30,7 @@ public class DiffEngine {
 			List<String> differences) {
 
 		if (primary.isValueNode()) {
-			if (primary.asText().equals(secondary.asText())) {
-				if (!primary.asText().equals(candidate.asText())) {
-					differences.add(path + ": " + primary + " -> " + candidate);
-				}
-			}
+			compareValueNode(primary, secondary, candidate, differences, path + ": " + primary + " -> " + candidate);
 		}
 
 		Iterator<String> fieldNames = primary.fieldNames();
@@ -48,11 +44,8 @@ public class DiffEngine {
 			JsonNode secondaryValue = secondary != null ? secondary.get(fieldName) : null;
 
 			if (primaryValue.isValueNode()) {
-				if (primaryValue.asText().equals(secondaryValue.asText())) {
-					if (!primaryValue.asText().equals(candidateValue.asText())) {
-						differences.add(path + "/" + fieldName + ": " + primaryValue + " -> " + candidateValue);
-					}
-				}
+				compareValueNode(primaryValue, secondaryValue, candidateValue, differences,
+						path + "/" + fieldName + ": " + primaryValue + " -> " + candidateValue);
 			}
 			else if (primaryValue.isObject()) {
 				findDifferences(primaryValue, candidateValue, secondaryValue, path + "/" + fieldName, differences);
@@ -63,6 +56,34 @@ public class DiffEngine {
 							differences);
 				}
 
+			}
+		}
+	}
+
+	private static void compareValueNode(JsonNode primaryValue, JsonNode secondaryValue, JsonNode candidateValue,
+			List<String> differences, String path) {
+		if (Objects.isNull(primaryValue)) {
+			if (Objects.nonNull(secondaryValue)) {
+				return;
+			}
+			else if (Objects.nonNull(candidateValue)) {
+				differences.add(path);
+				return;
+			}
+		}
+		else {
+			if (Objects.isNull(secondaryValue)) {
+				return;
+			}
+			else if (Objects.isNull(candidateValue)) {
+				differences.add(path);
+				return;
+			}
+		}
+
+		if (Objects.nonNull(secondaryValue) && primaryValue.asText().equals(secondaryValue.asText())) {
+			if (!primaryValue.asText().equals(candidateValue.asText())) {
+				differences.add(path);
 			}
 		}
 	}

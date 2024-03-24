@@ -14,6 +14,8 @@ public class ResponsesDto {
 
 	String traceId;
 
+	String requestUrl;
+
 	DownstreamResult primaryResult;
 
 	DownstreamResult secondaryResult;

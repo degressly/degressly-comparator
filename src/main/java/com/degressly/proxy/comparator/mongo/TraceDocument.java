@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Document("traceDocument")
@@ -15,10 +16,8 @@ public class TraceDocument {
 	@Id
 	private String traceId;
 
-	private ResponsesDto responses;
+	Map<String, ResponsesDto> responsesMap = Collections.emptyMap();
 
-	private List<String> responseDiffs = Collections.emptyList();
-
-	private List<String> downstreamDiffs = Collections.emptyList();
+	Map<String, Diffs> diffMap = Collections.emptyMap();
 
 }
