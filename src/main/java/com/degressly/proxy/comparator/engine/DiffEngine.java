@@ -28,20 +28,39 @@ public class DiffEngine {
 
 	private static void findDifferences(JsonNode primary, JsonNode candidate, JsonNode secondary, String path,
 			List<String> differences) {
+
+		if (primary.isValueNode()) {
+			if (primary.asText().equals(secondary.asText())) {
+				if (!primary.asText().equals(candidate.asText())) {
+					differences.add(path + ": " + primary + " -> " + candidate);
+				}
+			}
+		}
+
 		Iterator<String> fieldNames = primary.fieldNames();
 		while (fieldNames.hasNext()) {
 			String fieldName = fieldNames.next();
+			if("body".equals(fieldName)) {
+				System.out.println("here");
+			}
 			JsonNode primaryValue = primary.get(fieldName);
 			JsonNode candidateValue = candidate.get(fieldName);
 			JsonNode secondaryValue = secondary != null ? secondary.get(fieldName) : null;
 
-			if (primaryValue.equals(secondaryValue)) {
-				if (!primaryValue.equals(candidateValue)) {
-					differences.add(path + "/" + fieldName + ": " + primaryValue + " -> " + candidateValue);
+			if (primaryValue.isValueNode()) {
+				if (primaryValue.asText().equals(secondaryValue.asText())) {
+					if (!primaryValue.asText().equals(candidateValue.asText())) {
+						differences.add(path + "/" + fieldName + ": " + primaryValue + " -> " + candidateValue);
+					}
 				}
-				else if (primaryValue.isObject()) {
-					findDifferences(primaryValue, candidateValue, secondaryValue, path + "/" + fieldName, differences);
+			}
+			else if (primaryValue.isObject()) {
+				findDifferences(primaryValue, candidateValue, secondaryValue, path + "/" + fieldName, differences);
+			} else if (primaryValue.isArray()) {
+				for (int i = 0; i < primaryValue.size(); i++) {
+					findDifferences(primaryValue.get(i), candidateValue.get(i), secondaryValue.get(i), path+"/"+i, differences);
 				}
+
 			}
 		}
 	}
