@@ -21,4 +21,10 @@ public class Observation {
 
 	DownstreamResult candidateResult;
 
+	DownstreamRequest primaryRequest;
+
+	DownstreamRequest secondaryRequest;
+
+	DownstreamRequest candidateRequest;
+
 }

@@ -1,8 +1,10 @@
 package com.degressly.proxy.comparator.engine;
 
+import com.degressly.proxy.comparator.dto.Observation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
+import org.springframework.data.util.Pair;
 
 import java.util.*;
 
@@ -11,13 +13,20 @@ public class DiffEngine {
 
 	private static ObjectMapper objectMapper = new ObjectMapper();
 
-	public static <T> List<String> getNonDeterministicDifferences(T primaryObject, T secondaryObject,
-			T candidateObject) {
-		JsonNode primaryMap = objectMapper.convertValue(primaryObject, JsonNode.class);
-		JsonNode secondaryMap = objectMapper.convertValue(secondaryObject, JsonNode.class);
-		JsonNode candidateMap = objectMapper.convertValue(candidateObject, JsonNode.class);
+	public static Pair<List<String>, List<String>> getNonDeterministicDifferences(Observation observation) {
+		JsonNode primaryMap = objectMapper.convertValue(observation.getPrimaryResult(), JsonNode.class);
+		JsonNode secondaryMap = objectMapper.convertValue(observation.getSecondaryResult(), JsonNode.class);
+		JsonNode candidateMap = objectMapper.convertValue(observation.getCandidateResult(), JsonNode.class);
 
-		return findDeterministicDifferences(primaryMap, candidateMap, secondaryMap);
+		List<String> responseDiffs = findDeterministicDifferences(primaryMap, candidateMap, secondaryMap);
+
+		primaryMap = objectMapper.convertValue(observation.getPrimaryRequest(), JsonNode.class);
+		secondaryMap = objectMapper.convertValue(observation.getSecondaryRequest(), JsonNode.class);
+		candidateMap = objectMapper.convertValue(observation.getCandidateRequest(), JsonNode.class);
+
+		List<String> requestDiffs = findDeterministicDifferences(primaryMap, candidateMap, secondaryMap);
+
+		return Pair.of(requestDiffs, responseDiffs);
 	}
 
 	public static List<String> findDeterministicDifferences(JsonNode primary, JsonNode candidate, JsonNode secondary) {

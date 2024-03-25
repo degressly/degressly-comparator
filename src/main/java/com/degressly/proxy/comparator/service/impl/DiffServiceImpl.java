@@ -24,27 +24,14 @@ public class DiffServiceImpl implements DiffService {
 
 	@Override
 	public void process(Observation observation) {
-		try {
-			Map<String, Object> primaryMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(observation.getPrimaryResult()), new TypeReference<>() {
-				});
-			Map<String, Object> secondaryMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(observation.getSecondaryResult()), new TypeReference<>() {
-				});
-			Map<String, Object> candidateMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(observation.getCandidateResult()), new TypeReference<>() {
-				});
 
-			List<String> responseDiffs = DiffEngine.getNonDeterministicDifferences(primaryMap, secondaryMap,
-					candidateMap);
+		var diffs = DiffEngine.getNonDeterministicDifferences(observation);
+		List<String> requestDiffs = diffs.getFirst();
+		List<String> responseDiffs = diffs.getSecond();
 
-			persistenceServices.forEach((persistenceService -> persistenceService.save(observation.getTraceId(),
-					observation.getRequestUrl(), observation, responseDiffs, Collections.emptyList())));
+		persistenceServices.forEach((persistenceService -> persistenceService.save(observation.getTraceId(),
+				observation.getRequestUrl(), observation, responseDiffs, requestDiffs)));
 
-		}
-		catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 }
