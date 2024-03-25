@@ -1,9 +1,9 @@
 package com.degressly.proxy.comparator.service;
 
-import com.degressly.proxy.comparator.dto.ResponsesDto;
+import com.degressly.proxy.comparator.dto.Observation;
 
 public interface DiffService {
 
-	void process(ResponsesDto responsesDto);
+	void process(Observation observation);
 
 }

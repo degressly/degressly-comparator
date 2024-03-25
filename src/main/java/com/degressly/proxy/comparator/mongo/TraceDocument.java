@@ -1,12 +1,11 @@
 package com.degressly.proxy.comparator.mongo;
 
-import com.degressly.proxy.comparator.dto.ResponsesDto;
+import com.degressly.proxy.comparator.dto.Observation;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -16,7 +15,7 @@ public class TraceDocument {
 	@Id
 	private String traceId;
 
-	Map<String, ResponsesDto> responsesMap = Collections.emptyMap();
+	Map<String, Observation> responsesMap = Collections.emptyMap();
 
 	Map<String, Diffs> diffMap = Collections.emptyMap();
 

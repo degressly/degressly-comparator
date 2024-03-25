@@ -1,6 +1,6 @@
 package com.degressly.proxy.comparator.service.impl;
 
-import com.degressly.proxy.comparator.dto.ResponsesDto;
+import com.degressly.proxy.comparator.dto.Observation;
 import com.degressly.proxy.comparator.mongo.Diffs;
 import com.degressly.proxy.comparator.mongo.TraceDocument;
 import com.degressly.proxy.comparator.mongo.TraceDocumentRepository;
@@ -19,7 +19,7 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 	TraceDocumentRepository traceDocumentRepository;
 
 	@Override
-	public void save(String traceId, String requestUrl, ResponsesDto responsesDto, List<String> responseDiffs,
+	public void save(String traceId, String requestUrl, Observation observation, List<String> responseDiffs,
 			List<String> downstreamDiffs) {
 		TraceDocument document = traceDocumentRepository.findByTraceId(traceId);
 
@@ -41,8 +41,8 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 		downstreamDiffs.addAll(existingDownstreamDiffs);
 		diffs.setDownstreamDiffs(downstreamDiffs);
 
-		Map<String, ResponsesDto> responsesDtoMap = new HashMap<>(document.getResponsesMap());
-		responsesDtoMap.put(requestUrl, responsesDto);
+		Map<String, Observation> responsesDtoMap = new HashMap<>(document.getResponsesMap());
+		responsesDtoMap.put(requestUrl, observation);
 
 		document.setDiffMap(Collections.singletonMap(requestUrl, diffs));
 		document.setResponsesMap(responsesDtoMap);

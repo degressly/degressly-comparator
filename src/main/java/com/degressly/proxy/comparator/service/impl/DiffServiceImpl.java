@@ -1,14 +1,12 @@
 package com.degressly.proxy.comparator.service.impl;
 
-import com.degressly.proxy.comparator.dto.ResponsesDto;
+import com.degressly.proxy.comparator.dto.Observation;
 import com.degressly.proxy.comparator.engine.DiffEngine;
 import com.degressly.proxy.comparator.service.DiffService;
 import com.degressly.proxy.comparator.service.PersistenceService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,23 +23,23 @@ public class DiffServiceImpl implements DiffService {
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Override
-	public void process(ResponsesDto responsesDto) {
+	public void process(Observation observation) {
 		try {
 			Map<String, Object> primaryMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(responsesDto.getPrimaryResult()), new TypeReference<>() {
+				.readValue(objectMapper.writeValueAsString(observation.getPrimaryResult()), new TypeReference<>() {
 				});
 			Map<String, Object> secondaryMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(responsesDto.getSecondaryResult()), new TypeReference<>() {
+				.readValue(objectMapper.writeValueAsString(observation.getSecondaryResult()), new TypeReference<>() {
 				});
 			Map<String, Object> candidateMap = objectMapper
-				.readValue(objectMapper.writeValueAsString(responsesDto.getCandidateResult()), new TypeReference<>() {
+				.readValue(objectMapper.writeValueAsString(observation.getCandidateResult()), new TypeReference<>() {
 				});
 
 			List<String> responseDiffs = DiffEngine.getNonDeterministicDifferences(primaryMap, secondaryMap,
 					candidateMap);
 
-			persistenceServices.forEach((persistenceService -> persistenceService.save(responsesDto.getTraceId(),
-					responsesDto.getRequestUrl(), responsesDto, responseDiffs, Collections.emptyList())));
+			persistenceServices.forEach((persistenceService -> persistenceService.save(observation.getTraceId(),
+					observation.getRequestUrl(), observation, responseDiffs, Collections.emptyList())));
 
 		}
 		catch (JsonProcessingException e) {

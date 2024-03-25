@@ -1,6 +1,5 @@
 package com.degressly.proxy.comparator.dto;
 
-import com.degressly.proxy.comparator.dto.DownstreamResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponsesDto {
+public class Observation {
 
 	String traceId;
 

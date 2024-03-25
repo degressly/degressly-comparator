@@ -1,6 +1,6 @@
 package com.degressly.proxy.comparator.kafka;
 
-import com.degressly.proxy.comparator.dto.ResponsesDto;
+import com.degressly.proxy.comparator.dto.Observation;
 import com.degressly.proxy.comparator.service.DiffService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +23,7 @@ public class KafkaReceiver {
 	@KafkaListener(topics = "${diff.publisher.topic-name}", groupId = "${diff.publisher.group-id:comparator_default}")
 	public void listen(String message) throws JsonProcessingException {
 		logger.info("Message receiver: {}", message);
-		var responses = objectMapper.readValue(message, ResponsesDto.class);
+		var responses = objectMapper.readValue(message, Observation.class);
 		diffService.process(responses);
 	}
 
