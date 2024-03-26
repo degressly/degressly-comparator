@@ -21,6 +21,9 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 	@Override
 	public void save(String traceId, String requestUrl, Observation observation, List<String> responseDiffs,
 			List<String> downstreamDiffs) {
+
+		// TODO: Fix possible race condition here where two observations come at the same
+		// time, both will try to create a new document.
 		TraceDocument document = traceDocumentRepository.findByTraceId(traceId);
 
 		if (Objects.isNull(document)) {
@@ -28,7 +31,8 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 			document.setTraceId(traceId);
 		}
 
-		Diffs diffs = document.getDiffMap().get(requestUrl);
+		Map<String, Diffs> currentDiffMap = document.getDiffMap();
+		Diffs diffs = currentDiffMap.get(requestUrl);
 		if (Objects.isNull(diffs)) {
 			diffs = new Diffs();
 		}
@@ -44,7 +48,9 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 		Map<String, Observation> responsesDtoMap = new HashMap<>(document.getResponsesMap());
 		responsesDtoMap.put(requestUrl, observation);
 
-		document.setDiffMap(Collections.singletonMap(requestUrl, diffs));
+		Map<String, Diffs> newDiffs = new HashMap<>(Map.of(requestUrl, diffs));
+		newDiffs.putAll(currentDiffMap);
+		document.setDiffMap(newDiffs);
 		document.setResponsesMap(responsesDtoMap);
 
 		traceDocumentRepository.save(document);
