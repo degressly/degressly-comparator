@@ -1,12 +1,14 @@
 package com.degressly.proxy.comparator.mongo;
 
+import com.degressly.proxy.comparator.engine.Differences;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+
+import java.util.Map;
 
 @Data
 @Builder
@@ -14,8 +16,8 @@ import java.util.List;
 @NoArgsConstructor
 public class Diffs {
 
-	private List<String> responseDiffs = Collections.emptyList();
+	private Map<String, Differences> responseDiffs = new HashMap<>();
 
-	private List<String> downstreamDiffs = Collections.emptyList();
+	private Map<String, Differences> downstreamDiffs = new HashMap<>();
 
 }

@@ -15,6 +15,8 @@ public class Observation {
 
 	String requestUrl;
 
+	String observationType;
+
 	DownstreamResult primaryResult;
 
 	DownstreamResult secondaryResult;
