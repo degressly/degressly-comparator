@@ -30,6 +30,9 @@ Run application using ```mvn spring-boot:run```
 | MONGO_PASSWORD | Mongo DB Password      |
 | MONGO_DBNAME   | Mongo DB Database Name |
 
+## Known Issues
+* Race condition in Mongo persister if two observations of the same trace arrive at the same time.
+
 ## Support
 
 For queries, feature requests and more details on degressly, please visit [github.com/degressly/degressly-core](https://github.com/degressly/degressly-core).
