@@ -10,6 +10,6 @@ public class DownstreamResult {
 
 	private Map<String, Object> httpResponse;
 
-	private Exception exception;
+	private String exception;
 
 }
