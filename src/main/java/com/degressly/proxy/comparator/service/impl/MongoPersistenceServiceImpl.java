@@ -25,6 +25,9 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 	public void save(String traceId, String requestUrl, Observation observation, Differences responseDiffs,
 			Differences downstreamDiffs) {
 
+		// Replacing . with _ in map key due to mongo limitations
+		requestUrl = requestUrl.replace('.',  '_');
+
 		TraceDocument document = traceDocumentRepository.findByTraceId(traceId);
 
 		if (document == null) {
