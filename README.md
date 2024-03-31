@@ -17,9 +17,11 @@ Run application using ```mvn spring-boot:run```
 
 ### Config flags (VM options)
 
-| Flag                   | Example | Description                                                                                                                              |
-|------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------|
-| spring.profiles.active | mongo   | Profile activation depending on persistent datasource. Mongo credentials environment variables are mandatory if using the mongo profile. |
+| Flag                   | Example              | Description                                                                                                                              |
+|------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| spring.profiles.active | mongo                | Profile activation depending on persistent datasource. Mongo credentials environment variables are mandatory if using the mongo profile. |
+|diff.publisher.bootstrap-servers| localhost:9092       | Bootstrap servers for consuming observations from degressly-core and degressly-downstream.                                               |
+|diff.publisher.topic-name| diff_stream(default) | Topic for consuming observations from.                                                                                                   |
 
 ### Config flags (Environment variables)
 

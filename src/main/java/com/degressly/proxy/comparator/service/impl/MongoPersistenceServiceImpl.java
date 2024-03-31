@@ -26,7 +26,7 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 			Differences downstreamDiffs) {
 
 		// Replacing . with _ in map key due to mongo limitations
-		requestUrl = requestUrl.replace('.',  '_');
+		requestUrl = requestUrl.replace('.', '_');
 
 		TraceDocument document = traceDocumentRepository.findByTraceId(traceId);
 
