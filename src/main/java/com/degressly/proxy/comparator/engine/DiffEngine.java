@@ -1,99 +1,162 @@
 package com.degressly.proxy.comparator.engine;
 
 import com.degressly.proxy.comparator.dto.Observation;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.util.Pair;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
 @UtilityClass
 public class DiffEngine {
 
-	private static ObjectMapper objectMapper = new ObjectMapper();
+	public static final ObjectMapper objectMapper = new ObjectMapper();
 
-	public static Pair<List<String>, List<String>> getNonDeterministicDifferences(Observation observation) {
-		JsonNode primaryMap = objectMapper.convertValue(observation.getPrimaryResult(), JsonNode.class);
-		JsonNode secondaryMap = objectMapper.convertValue(observation.getSecondaryResult(), JsonNode.class);
-		JsonNode candidateMap = objectMapper.convertValue(observation.getCandidateResult(), JsonNode.class);
+	public static Pair<Differences, Differences> getNonDeterministicDifferences(Observation observation) {
 
-		List<String> responseDiffs = findDeterministicDifferences(primaryMap, candidateMap, secondaryMap);
+		Differences requestDifferences = getRequestDifferences(observation);
+		Differences responseDifferences = getResponseDifferences(observation);
 
-		primaryMap = objectMapper.convertValue(observation.getPrimaryRequest(), JsonNode.class);
-		secondaryMap = objectMapper.convertValue(observation.getSecondaryRequest(), JsonNode.class);
-		candidateMap = objectMapper.convertValue(observation.getCandidateRequest(), JsonNode.class);
+		return Pair.of(responseDifferences, requestDifferences);
 
-		List<String> requestDiffs = findDeterministicDifferences(primaryMap, candidateMap, secondaryMap);
-
-		return Pair.of(requestDiffs, responseDiffs);
 	}
 
-	public static List<String> findDeterministicDifferences(JsonNode primary, JsonNode candidate, JsonNode secondary) {
-		List<String> differences = new ArrayList<>();
-		findDifferences(primary, candidate, secondary, "", differences);
-		return differences;
+	private static Differences getResponseDifferences(Observation observation) {
+		Map<String, Object> primaryResult = convertToFlatMap(
+				objectMapper.convertValue(observation.getPrimaryResult(), new TypeReference<>() {
+				}));
+		Map<String, Object> secondaryResult = convertToFlatMap(
+				objectMapper.convertValue(observation.getSecondaryResult(), new TypeReference<>() {
+				}));
+		Map<String, Object> candidateResult = convertToFlatMap(
+				objectMapper.convertValue(observation.getCandidateResult(), new TypeReference<>() {
+				}));
+
+		Map<String, String> rawDifferences = getDifferences("primary", primaryResult, "candidate", candidateResult);
+		Map<String, String> noise = getDifferences("primary", primaryResult, "secondary", secondaryResult);
+		Map<String, String> filteredDifferences = filterDifferences(rawDifferences, noise);
+
+		return Differences.builder()
+			.rawDifferences(rawDifferences)
+			.noise(noise)
+			.filteredDifferences(filteredDifferences)
+			.build();
 	}
 
-	private static void findDifferences(JsonNode primary, JsonNode candidate, JsonNode secondary, String path,
-			List<String> differences) {
+	private static Differences getRequestDifferences(Observation observation) {
+		Map<String, Object> primaryRequest = convertToFlatMap(
+				objectMapper.convertValue(observation.getPrimaryRequest(), new TypeReference<>() {
+				}));
+		Map<String, Object> secondaryRequest = convertToFlatMap(
+				objectMapper.convertValue(observation.getSecondaryRequest(), new TypeReference<>() {
+				}));
+		Map<String, Object> candidateRequest = convertToFlatMap(
+				objectMapper.convertValue(observation.getCandidateRequest(), new TypeReference<>() {
+				}));
 
-		if (primary.isValueNode()) {
-			compareValueNode(primary, secondary, candidate, differences, path + ": " + primary + " -> " + candidate);
+		Map<String, String> rawDifferences = getDifferences("primary", primaryRequest, "candidate", candidateRequest);
+		Map<String, String> noise = getDifferences("primary", primaryRequest, "secondary", secondaryRequest);
+		Map<String, String> filteredDifferences = filterDifferences(rawDifferences, noise);
+
+		return Differences.builder()
+			.rawDifferences(rawDifferences)
+			.noise(noise)
+			.filteredDifferences(filteredDifferences)
+			.build();
+	}
+
+	private static Map<String, String> filterDifferences(Map<String, String> rawDifferences,
+			Map<String, String> noise) {
+		Map<String, String> filtered = new HashMap<>();
+
+		for (String key : rawDifferences.keySet()) {
+			if (!noise.containsKey(key)) {
+				filtered.put(key, rawDifferences.get(key));
+			}
 		}
 
-		Iterator<String> fieldNames = primary.fieldNames();
-		while (fieldNames.hasNext()) {
-			String fieldName = fieldNames.next();
-
-			JsonNode primaryValue = primary != null ? primary.get(fieldName) : null;
-			JsonNode candidateValue = candidate != null ? candidate.get(fieldName) : null;
-			JsonNode secondaryValue = secondary != null ? secondary.get(fieldName) : null;
-
-			if ((Objects.isNull(primaryValue) || Objects.isNull(secondaryValue) || Objects.isNull(candidateValue))
-					|| primaryValue.isValueNode()) {
-				compareValueNode(primaryValue, secondaryValue, candidateValue, differences,
-						path + "/" + fieldName + ": " + primaryValue + " -> " + candidateValue);
-			}
-			else if (primaryValue.isObject()) {
-				findDifferences(primaryValue, candidateValue, secondaryValue, path + "/" + fieldName, differences);
-			}
-			else if (primaryValue.isArray()) {
-				for (int i = 0; i < primaryValue.size(); i++) {
-					findDifferences(primaryValue.get(i), candidateValue.get(i), secondaryValue.get(i), path + "/" + i,
-							differences);
-				}
-
-			}
-		}
+		return filtered;
 	}
 
-	private static void compareValueNode(JsonNode primaryValue, JsonNode secondaryValue, JsonNode candidateValue,
-			List<String> differences, String path) {
-		if (Objects.isNull(primaryValue)) {
-			if (Objects.nonNull(secondaryValue)) {
-				return;
-			}
-			else if (Objects.nonNull(candidateValue)) {
-				differences.add(path);
-				return;
+	public static Map<String, Object> convertToFlatMap(Map<String, Object> map) {
+		Map<String, Object> flatMap = new HashMap<>();
+
+		if (CollectionUtils.isEmpty(map)) {
+			return Collections.emptyMap();
+		}
+
+		for (Map.Entry<String, Object> entry : map.entrySet()) {
+			processNode("", entry, flatMap);
+		}
+
+		return flatMap;
+	}
+
+	private static void processNode(String path, Map.Entry<String, Object> entry, Map<String, Object> flatMap) {
+		String key = entry.getKey();
+		Object value = entry.getValue();
+
+		if (value instanceof Map) {
+			Map<String, Object> valueMap = (Map<String, Object>) value;
+			for (Map.Entry<String, Object> innerEntry : valueMap.entrySet()) {
+				processNode(path + "/" + key, innerEntry, flatMap);
 			}
 		}
 		else {
-			if (Objects.isNull(secondaryValue)) {
-				return;
+			flatMap.put(path + "/" + key, value);
+		}
+	}
+
+	public static Map<String, String> getDifferences(String leftLabel, Map<String, Object> left, String rightLabel,
+			Map<String, Object> right) {
+		Map<String, String> differences = new HashMap<>();
+
+		// Loop over keys on left
+		loopOverKeys(leftLabel, left, rightLabel, right, differences);
+		// Loop over keys on left
+		loopOverKeys(rightLabel, right, leftLabel, left, differences);
+
+		return differences;
+	}
+
+	private static void loopOverKeys(String leftLabel, Map<String, Object> left, String rightLabel,
+			Map<String, Object> right, Map<String, String> differences) {
+		for (Map.Entry<String, Object> entry : left.entrySet()) {
+			if (right.containsKey(entry.getKey())) {
+				if (Objects.isNull(entry.getValue())) {
+					if (!Objects.isNull(right.get(entry.getKey()))) {
+						differences.putIfAbsent(entry.getKey(),
+								generateDifferenceString(leftLabel, "null", rightLabel, right.get(entry.getKey())));
+					}
+					continue;
+				}
+				if (!entry.getValue().equals(right.get(entry.getKey()))) {
+					differences.putIfAbsent(entry.getKey(), generateDifferenceString(leftLabel, entry.getValue(),
+							rightLabel, right.get(entry.getKey())));
+				}
 			}
-			else if (Objects.isNull(candidateValue)) {
-				differences.add(path);
-				return;
+			else {
+				differences.putIfAbsent(entry.getKey(),
+						generateDifferenceString(leftLabel, entry.getValue(), rightLabel, "null"));
 			}
+		}
+	}
+
+	private String generateDifferenceString(String leftLabel, Object leftValue, String rightLabel, Object rightValue) {
+		try {
+			var leftObjectJson = objectMapper.writeValueAsString(leftValue);
+			var rightObjectJson = objectMapper.writeValueAsString(rightValue);
+
+			return leftLabel + ": " + leftObjectJson + " --> " + rightLabel + ": " + rightObjectJson;
+
+		}
+		catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
 		}
 
-		if (Objects.nonNull(secondaryValue) && primaryValue.asText().equals(secondaryValue.asText())) {
-			if (!primaryValue.asText().equals(candidateValue.asText())) {
-				differences.add(path);
-			}
-		}
 	}
 
 }

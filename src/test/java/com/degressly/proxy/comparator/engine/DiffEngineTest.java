@@ -1,41 +1,73 @@
 package com.degressly.proxy.comparator.engine;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.degressly.proxy.comparator.dto.DownstreamRequest;
+import com.degressly.proxy.comparator.dto.Observation;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.util.List;
-
-import static com.degressly.proxy.comparator.engine.DiffEngine.findDeterministicDifferences;
+import java.util.Collections;
+import java.util.Map;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DiffEngineTest {
 
+	private static final ObjectMapper objectMapper = new ObjectMapper();
+
 	@Test
-	public void testFindDeterministicDifferences() throws IOException {
-		ObjectMapper objectMapper = new ObjectMapper();
+	public void getNonDeterministicDifferences() {
 
-		String primaryJsonString = "{\"name\": \"John\", \"age\": 30, \"test\":[{\"a\": true},2,3], \"address\": {\"city\": \"New York\", \"zip\": 10001}}";
-		String candidateJsonString = "{\"name\": \"John\", \"age\": 31, \"test\":[{\"a\": false},2,3], \"address\": {\"city\": \"Los Angeles\", \"zip\": 90001}}";
-		String secondaryJsonString = "{\"name\": \"John\", \"age\": 30,  \"test\":[{\"a\": true},2,3],\"address\": {\"city\": \"New York\", \"zip\": 10001}}";
+		var obs1 = getObservation();
+		Map<String, Object> map1 = DiffEngine.convertToFlatMap(objectMapper.convertValue(obs1, new TypeReference<>() {
+		}));
 
-		JsonNode primaryJson = objectMapper.readTree(primaryJsonString);
-		JsonNode candidateJson = objectMapper.readTree(candidateJsonString);
-		JsonNode secondaryJson = objectMapper.readTree(secondaryJsonString);
+		System.out.println(map1);
+		System.out.println(DiffEngine.getNonDeterministicDifferences(obs1));
 
-		List<String> differences = findDeterministicDifferences(primaryJson, candidateJson, secondaryJson);
-		Assert.assertEquals(4, differences.size());
-		// Assert.assertArrayEquals(
-		// new String[] { "/age: 30 -> 31", "/0/a: true -> false", "/test:
-		// [{\"a\":true},2,3] -> [{\"a\":false},2,3]",
-		// "/address: {\"city\":\"New York\",\"zip\":10001} -> {\"city\":\"Los
-		// Angeles\",\"zip\":90001}" },
-		// differences.toArray());
-		differences.forEach(System.out::println);
+		System.out.println(DiffEngine.getNonDeterministicDifferences(getObservationXml()));
+
+	}
+
+	private Observation getObservation() {
+		var observation = new Observation();
+		observation.setPrimaryRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("{\"c\":\"d\",\"x\":{\"y\":\"z\"}}")
+			.params(Collections.singletonMap("e", Collections.singletonList("f")))
+			.build());
+		observation.setSecondaryRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("{\"c\":\"d\",\"x\":{\"y\":\"z\"}}")
+			.params(Map.of("e", Collections.singletonList("f"), "g", Collections.singletonList("x")))
+			.build());
+		observation.setCandidateRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("{\"c\":\"d\",\"x\":{\"y\":\"z2\"}}")
+			.params(Map.of("e", Collections.singletonList("f"), "g", Collections.singletonList("h")))
+			.build());
+		return observation;
+	}
+
+	private Observation getObservationXml() {
+		var observation = new Observation();
+		observation.setPrimaryRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><root><book category=\"web\" cover=\"paperback\"><title lang=\"en\">Learning XML</title><author>Erik T. Ray</author><year>2003</year><price>39.95</price></book></root>\n")
+			.params(Collections.singletonMap("e", Collections.singletonList("f")))
+			.build());
+		observation.setSecondaryRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><root><book category=\"web\" cover=\"paperback\"><title lang=\"en\">Learning XML</title><author>Erik T. Ray</author><year>2003</year><price>39.95</price></book></root>\n")
+			.params(Map.of("e", Collections.singletonList("f"), "g", Collections.singletonList("x")))
+			.build());
+		observation.setCandidateRequest(DownstreamRequest.builder()
+			.headers(Collections.singletonMap("a", Collections.singletonList("b")))
+			.body("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><root><book category=\"web\" cover=\"paperback\"><title lang=\"en\">Learning XML</title><author>Erik T. Ray</author><year>2003</year><price>39.94</price></book></root>\n")
+			.params(Map.of("e", Collections.singletonList("f"), "g", Collections.singletonList("h")))
+			.build());
+		return observation;
 	}
 
 }
