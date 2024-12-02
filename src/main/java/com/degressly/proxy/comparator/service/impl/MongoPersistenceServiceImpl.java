@@ -9,6 +9,8 @@ import com.degressly.proxy.comparator.service.PersistenceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -48,10 +50,16 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 				updateDownstreamDiffMap(requestUrl, downstreamDiffs, document);
 			}
 
-			log.info("Saving: {}", document);
-			traceDocumentRepository.save(document);
+			saveDocument(document);
 		}
 
+	}
+
+	@Retryable(maxAttemptsExpression = "${mongo.retry.max.attempts:8}",
+			backoff = @Backoff(delayExpression = "${mongo.retry.delay:1000}", multiplier = 2))
+	private void saveDocument(TraceDocument document) {
+		log.info("Saving: {}", document);
+		traceDocumentRepository.save(document);
 	}
 
 	private static void updateDownstreamDiffMap(String requestUrl, Differences responseDiffs, TraceDocument document) {
