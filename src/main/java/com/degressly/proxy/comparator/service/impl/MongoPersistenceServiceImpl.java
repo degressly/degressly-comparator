@@ -46,7 +46,8 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 				updateResponseDiffMap(requestUrl, responseDiffs, document);
 			}
 
-			if ("REQUEST".equals(observation.getObservationType())) {
+			if ("REQUEST".equals(observation.getObservationType())
+					|| "KAFKA".equals(observation.getObservationType())) {
 				updateDownstreamDiffMap(requestUrl, downstreamDiffs, document);
 			}
 
@@ -81,14 +82,15 @@ public class MongoPersistenceServiceImpl implements PersistenceService {
 	private static void updateObservationMap(String requestUrl, Observation observation, TraceDocument document) {
 		Map<String, List<Observation>> existingObservationsMap = document.getObservationMap();
 
-		List<Observation> observationsList = existingObservationsMap.get(requestUrl);
+		List<Observation> observationsList = existingObservationsMap
+			.get(observation.getObservationType() + "_" + requestUrl);
 		List<Observation> newObservationsList = new ArrayList<>(Arrays.asList(observation));
 		if (!CollectionUtils.isEmpty(observationsList)) {
 			newObservationsList = combineObservationLists(observationsList, newObservationsList);
 		}
 
 		Map<String, List<Observation>> newObservationsMap = new HashMap<>(existingObservationsMap);
-		newObservationsMap.put(requestUrl, newObservationsList);
+		newObservationsMap.put(observation.getObservationType() + "_" + requestUrl, newObservationsList);
 		document.setObservationMap(newObservationsMap);
 	}
 

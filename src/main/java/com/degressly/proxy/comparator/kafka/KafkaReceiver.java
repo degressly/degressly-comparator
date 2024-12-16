@@ -22,9 +22,14 @@ public class KafkaReceiver {
 
 	@KafkaListener(topics = "${diff.publisher.topic-name}", groupId = "${diff.publisher.group-id:comparator_default}")
 	public void listen(String message) throws JsonProcessingException {
-		logger.info("Message receiver: {}", message);
-		var responses = objectMapper.readValue(message, Observation.class);
-		diffService.process(responses);
+		try {
+			logger.info("Message receiver: {}", message);
+			var responses = objectMapper.readValue(message, Observation.class);
+			diffService.process(responses);
+		}
+		catch (Exception e) {
+			logger.error("Error when processing observation", e);
+		}
 	}
 
 }
