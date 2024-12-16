@@ -9,6 +9,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @UtilityClass
 public class DiffEngine {
@@ -99,6 +100,10 @@ public class DiffEngine {
 		String key = entry.getKey();
 		Object value = entry.getValue();
 
+		if (value instanceof List) {
+			value = flattenList((List) value);
+		}
+
 		if (value instanceof Map) {
 			Map<String, Object> valueMap = (Map<String, Object>) value;
 			for (Map.Entry<String, Object> innerEntry : valueMap.entrySet()) {
@@ -108,6 +113,14 @@ public class DiffEngine {
 		else {
 			flatMap.put(path + "/" + key, value);
 		}
+	}
+
+	private static Object flattenList(List<Object> list) {
+		Map<String, Object> map = new HashMap<>(list.size());
+		for (int i = 0; i < list.size(); i++) {
+			map.put(String.valueOf(i), list.get(i));
+		}
+		return map;
 	}
 
 	public static Map<String, String> getDifferences(String leftLabel, Map<String, Object> left, String rightLabel,
